@@ -67,7 +67,7 @@ Downsides
 
 If others find this useful, maybe we can work together on designing the script better.
 
-# How Addressables Team could be inspired by this
+# How Unity's Addressables Team could be inspired by this
 
 * **Best Option**: Allow selecting top-level Asset folders where each subfolder will become a group, and every asset in each folder becomes an automatic addressable under those groups (same structure as created by this script, allows people to manage addressables directly from their folders).
 * **Next-Best Option**: Allow mapping a single folder in Assets to a single group, and create and maintain an Addressable for each asset in the folder. Allow creating multiple of these links. Achieves same result as above, but with more work.
