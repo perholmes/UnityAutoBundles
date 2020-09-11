@@ -1,7 +1,5 @@
 # Unity AutoBundles
-Extension to Unity's Addressables for making it easier to distribute large projects and keep mobile download size small.
-
-The AutoBundles extension to the Unity Engine allows you to:
+Extension to Unity Engine's Addressables for making it easier to distribute large projects and keep mobile download size small.
 
 * Just create a folder for all your assets.
 * Automatically generate Addressables and keep them synced.
@@ -14,11 +12,11 @@ The AutoBundles extension to the Unity Engine allows you to:
 
 You just arrange all your assets in a folder called AutoBundles:
 
-(image)
+![AutoBundles](https://github.com/perholmes/UnityAutoBundles/raw/master/Images/folders.png)
 
 Addressables are automatically created for everything in this folder, each single item as its own Addressable.
 
-(image)
+![AutoBundles](https://github.com/perholmes/UnityAutoBundles/raw/master/Images/mapping.png)
 
 # Workflow
 
@@ -42,9 +40,9 @@ Addressables are automatically created for everything in this folder, each singl
 
 # How To Use It:
 
-Simply open the AutoBundles *Analyze* Rule:
+Simply open the AutoBundles **Analyze** Rule:
  
-(Image)
+![AutoBundles](https://github.com/perholmes/UnityAutoBundles/raw/master/Images/analyze.png)
  
 Then press *Fix Selected Rules*, and the Addressables are updated to mirror the AutoBundles folder structure. Only groups starting with "(Auto)" are synced, and tagging of individual assets is preserved.
 Downsides
