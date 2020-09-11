@@ -35,7 +35,7 @@ Addressables are automatically created for everything in this folder, each singl
 * Multi-file bundles are bad for users, because they result in extreme over-caching especially on mobile.
 * By making every texture, prefab, material, or whatever, its own Addressable, downloading and updating is as nimble as possible.
 * Manually labelling Addressables is a drag, especially if you have 10,000 assets.
-* You already have a folder structre. Why can't Addressables just mirror it?
+* You already have a folder structure. Why can't Addressables just mirror it?
 * AutoBundles is two-click automation to do this.
 
 # How To Use It:
@@ -69,9 +69,9 @@ If others find this useful, maybe we can work together on designing the script b
 
 # How Addressables Team could be inspired by this
 
-* Best Option: Allow selecting top-level Asset folders where each subfolder will become a group, and every asset in each folder becomes an automatic addressable under those groups (same structure as created by this script, allows people to manage addressables directly from their folders).
-* Next-Best Option: Allow mapping a single folder in Assets to a single group, and create and maintain an Addressable for each asset in the folder. Allow creating multiple of these links. Achieves same result as above, but with more work.
-* Next-Next-Best Option: Allow folders dropped into Addressables to have an option for "(X) Create Addressables for all Sub-Assets". This says that all the sub-entries are managed, and are created and removed at a pre-build stage in order to stay in sync with the folder the assets came from.
+* **Best Option**: Allow selecting top-level Asset folders where each subfolder will become a group, and every asset in each folder becomes an automatic addressable under those groups (same structure as created by this script, allows people to manage addressables directly from their folders).
+* **Next-Best Option**: Allow mapping a single folder in Assets to a single group, and create and maintain an Addressable for each asset in the folder. Allow creating multiple of these links. Achieves same result as above, but with more work.
+* **Next-Next-Best Option**: Allow folders dropped into Addressables to have an option for "(X) Create Addressables for all Sub-Assets". This says that all the sub-entries are managed, and are created and removed at a pre-build stage in order to stay in sync with the folder the assets came from.
 
 Cheers,
 
