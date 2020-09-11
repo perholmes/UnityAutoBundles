@@ -44,8 +44,9 @@ Simply open the AutoBundles **Analyze** Rule:
  
 ![AutoBundles](https://github.com/perholmes/UnityAutoBundles/raw/master/Images/analyze.png)
  
-Then press *Fix Selected Rules*, and the Addressables are updated to mirror the AutoBundles folder structure. Only groups starting with "(Auto)" are synced, and tagging of individual assets is preserved.
-Downsides
+Then press **Fix Selected Rules**, and the Addressables are updated to mirror the AutoBundles folder structure. Only groups starting with "(Auto)" are synced, and tagging of individual assets is preserved.
+
+# Downsides
 
 * It may bundle some things that won't be used by anyone. We could create more filters, or tags to handle this. Or just ignore it, CDN storage is cheap. We only care about end-users not downloading more than they need.
 * It's unknown how it scales. Hasn't been tested with tens of thousands of assets.
@@ -76,7 +77,9 @@ If others find this useful, maybe we can work together on designing the script b
 Cheers,
 
 Per Holmes
+
 Hollywood Camera Work
+
 www.hollywoodcamerawork.com
 
 
