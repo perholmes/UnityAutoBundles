@@ -118,6 +118,7 @@ namespace UnityEditor.AddressableAssets.Build.AnalyzeRules
             foreach (KeyValuePair<string, int> asset in refCounts) {
                 if (asset.Value == 0 && neverBundleNoReferences || asset.Value == 1) {
                     neverBundle.Add(asset.Key);
+                    break;
                 }
 
                 bool ignore = false;
@@ -224,6 +225,7 @@ namespace UnityEditor.AddressableAssets.Build.AnalyzeRules
             foreach (var template in groupTemplates) {
                 if (template.name == templateToUse) {
                     foundTemplate = template as AddressableAssetGroupTemplate;
+                    break;
                 }
             }
 
