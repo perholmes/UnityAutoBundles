@@ -67,7 +67,7 @@ namespace UnityEditor.AddressableAssets.Build.AnalyzeRules
                 }
             }
 
-            // Collect all groups that must be created or removed
+            // Collect all groups that must be created or moved
 
             foreach (var folder in folderNames) {
                 var autoName = autoGroupPrefix + folder;
