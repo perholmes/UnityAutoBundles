@@ -6,6 +6,7 @@ Extension to Unity Engine's Addressables for making it easier to distribute larg
 * Creates one .bundle file for each individual asset, resulting in your app only downloading or updating EXACTLY what it needs.
 * Dramatically reduce storage and bandwidth usage, which is critical on mobile and great on desktop. Don't use a 5 GB cache on mobile when only 500 MB is needed.
 * Reduce your CDN storage with much smaller updates.
+* Don't manage everything in two places.
 * A hands-off approach to Addressables. No manual labeling or maintenance, just a giant bucket of assets, and the app downloads what it needs.
 
 # How does it work?
