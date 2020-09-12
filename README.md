@@ -73,6 +73,7 @@ If others find this useful, maybe we can work together on designing the script b
 
 * **Best Option**: Allow selecting top-level Asset folders where each subfolder will become a group, and every asset in each folder becomes an automatic addressable under those groups (same structure as created by this script, allows people to manage addressables directly from their folders).
 * **Next-Best Option**: Allow mapping a single folder in Assets to a single group, and create and maintain an Addressable for each asset in the folder. Allow creating multiple of these links. Achieves same result as above, but with more work.
+* **Next-Next-Best Option**: When using "Pack Separately" on a folder item, Addressables should only download the actual bundle files needed. Currently, if you request a tiny asset from a 1 GB bundle packed separately, Addressables still downloads the entire gigabyte.
 
 Cheers,
 
