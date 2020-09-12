@@ -72,7 +72,6 @@ If others find this useful, maybe we can work together on designing the script b
 
 * **Best Option**: Allow selecting top-level Asset folders where each subfolder will become a group, and every asset in each folder becomes an automatic addressable under those groups (same structure as created by this script, allows people to manage addressables directly from their folders).
 * **Next-Best Option**: Allow mapping a single folder in Assets to a single group, and create and maintain an Addressable for each asset in the folder. Allow creating multiple of these links. Achieves same result as above, but with more work.
-* **Next-Next-Best Option**: Allow folders dropped into Addressables to have an option for "(X) Create Addressables for all Sub-Assets". This says that all the sub-entries are managed, and are created and removed at a pre-build stage in order to stay in sync with the folder the assets came from.
 
 Cheers,
 
