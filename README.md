@@ -3,11 +3,11 @@ Extension to Unity Engine's Addressables for making it easier to distribute larg
 
 * Just create a folder for all your assets.
 * Automatically generate Addressables and keep them synced.
-* Creates one .bundle file for each individual asset, resulting in your app only downloading or updating EXACTLY what it needs.
-* Dramatically reduce storage and bandwidth usage, which is critical on mobile and great on desktop. Don't use a 5 GB cache on mobile when only 500 MB is needed.
-* Reduce your CDN storage with much smaller updates.
-* Don't manage everything in two places.
-* A hands-off approach to Addressables. No manual labeling or maintenance, just a giant bucket of assets, and the app downloads what it needs.
+* Creates one .bundle file for each asset, resulting in your only downloading or updating EXACTLY what it needs, reducing caching, bandwidth and storage dramatically.
+* Heavy dependency checking. Only bundles things that are references, and splits out assets that are used by multiple other assets.
+* Creates the smallest number of bundles necessary to download only what's needed for each scene.
+* Allows you to force some assets to become addressable, even if they're unreferenced.
+* The goal is extreme automation. No babysitting. Just a giant bucket of assets, and the script does the right thing.
 
 # How does it work?
 
@@ -21,23 +21,29 @@ Addressables are automatically created for everything in this folder, each singl
 
 # Workflow
 
-* Under the AutoBundles folder, you arrange all your assets in appropriate folders, e.g. a "Trees" folder, a "Rocks" folder, a "Scenes" folder.
-* You ONLY arrange this folder. You NEVER manually organize Addressables.
-* A script scrapes this folder and creates a unique Addressable for every single asset. One addressable per asset.
-* It also creates an Addressable Group for each top level folder under AutoBundles. So you'll get a "(Auto) Rocks" group, with every prefab, material or texture as its own, unique Addressable.
-* Each Addressable is packed into a unique bundle file.
-* When a scene (or any selected assets) need to be loaded, Addressables downloads only EXACTLY what is needed. If your "Rocks" folder has 100 MB of rocks, but you only use one, only 5 MB is downloaded.
-* You push all your assets to the CDN, and the app just downloads what it needs at runtime.
-* When you change an asset (e.g. change specularity on a material), that material just becomes a new, tiny .bundle file next to the old one. You sync to the same CDN (tiny upload), and release a new version of the app.
-* Inspired by Unreal Engine's extremely fine-grained patching system. Client only downloads exactly what it needs. CDN updates are tiny and overlaid.
+* Organize your assets in folders under AutoBundles.
+* Each top-level folder becomes an Addressable group.
+* You only organize the AutoBundles folder. Addressables are magically created, optimized and synced.
+* Each asset become an addressable unless:
+  * It's not the right type or file extension.
+  * It has zero or one parents.
+  * It has zero or one ultimate parents (ensuring that we don't create multiple bundles for what is ultimately just pieces of one asset).
+  * It's not part of any scene.
+  * It's too small to warrant its own bundle file. Gets duplicated into multiple bundles instead, to reduce number of bundles.
+* Any assets not bundled are still included by the Addressables framework if needed, just not in a separate bundle file.
+* You can force the inclusion of an asset by adding the label "ForceAddressable", e.g. if you intend to address the asset manually, and it's currently unreferenced.
+Under the AutoBundles folder, you arrange all your assets in appropriate folders, e.g. a "Trees" folder, a "Rocks" folder, a "Scenes" folder.
+* You only push actual changes to the CDN.
+* User only downloads what's needed for the scenes/assets they're intending to run.
 
 # Why?
 
 * Multi-file bundles are bad for users, because they result in extreme over-caching especially on mobile.
 * By making every texture, prefab, material, or whatever, its own Addressable, downloading and updating is as nimble as possible.
 * Manually labelling Addressables is a drag, especially if you have 10,000 assets.
-* You already have a folder structure. Why can't Addressables just mirror it?
-* AutoBundles is two-click automation to do this.
+* Manually optimizing Addressables is a drag. AutoBundles creates the smallest bundles that still give you individual control over the assets you care about.
+* You already have a folder structure. Why not just lean on that? 
+* AutoBundles is two-click automation. Hopefully zero-click in the future.
 
 # How To Use It:
 
@@ -49,10 +55,8 @@ Then press **Fix Selected Rules**, and the Addressables are updated to mirror th
 
 # Downsides
 
-* It may bundle some things that won't be used by anyone. We could create more filters, or tags to handle this. Or just ignore it, CDN storage is cheap. We only care about end-users not downloading more than they need.
-* It's unknown how it scales. Hasn't been tested with tens of thousands of assets.
-* It's many more web requests. But with concurrent requests set to just 32, you don't feel any slowdown.
-* It's unknown how much overhead is added with individual bundle files. But it's surely less than downloading just one JPG you don't need.
+* It uses more file handles to open more bundles at runtime. But this is drastically reduced in latest version.
+* It's more web requests. But with concurrent requests set to just 32, you don't feel any slowdown.
 
 # How To Install
 
@@ -68,12 +72,6 @@ Then press **Fix Selected Rules**, and the Addressables are updated to mirror th
 # Contributing
 
 If others find this useful, maybe we can work together on designing the script better.
-
-# How Unity's Addressables Team could be inspired by this
-
-* **Best Option**: Allow selecting top-level Asset folders where each subfolder will become a group, and every asset in each folder becomes an automatic addressable under those groups (same structure as created by this script, allows people to manage addressables directly from their folders).
-* **Next-Best Option**: Allow mapping a single folder in Assets to a single group, and create and maintain an Addressable for each asset in the folder. Allow creating multiple of these links. Achieves same result as above, but with more work.
-* **Next-Next-Best Option**: When using "Pack Separately" on a folder item, Addressables should only download the actual bundle files needed. Currently, if you request a tiny asset from a 1 GB bundle packed separately, Addressables still downloads the entire gigabyte.
 
 Cheers,
 
