@@ -40,7 +40,7 @@ Addressables are automatically created for everything in this folder, each singl
 * Multi-file bundles are bad for users, because they result in extreme over-caching especially on mobile.
 * By making every texture, prefab, material, or whatever, its own Addressable, downloading and updating is as nimble as possible.
 * Manually labelling Addressables is a drag, especially if you have 10,000 assets.
-* Manually optimizing Addressables is a drag. AutoBundles creates the smallest bundles that still give you individual control over the assets you care about.
+* Manually optimizing Addressables is a drag. AutoBundles creates the lowest number of bundles that still give you individual control over the assets you care about.
 * You already have a folder structure. Why not just lean on that? 
 * AutoBundles is two-click automation. Hopefully zero-click in the future.
 
