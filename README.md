@@ -3,8 +3,8 @@ Extension to Unity Engine's Addressables for making it easier to distribute larg
 
 * Just create a folder for all your assets.
 * Automatically generate Addressables and keep them synced.
-* Creates one .bundle file for each asset, resulting in your only downloading or updating EXACTLY what it needs, reducing caching, bandwidth and storage dramatically.
-* Heavy dependency checking. Only bundles things that are references, and splits out assets that are used by multiple other assets.
+* Creates one .bundle file for each asset, resulting in your app only downloading or updating EXACTLY what it needs, reducing caching, bandwidth and storage dramatically.
+* Heavy dependency checking. Only bundles things that are referenced, and splits out assets that are used by multiple assets.
 * Creates the smallest number of bundles necessary to download only what's needed for each scene.
 * Allows you to force some assets to become addressable, even if they're unreferenced.
 * The goal is extreme automation. No babysitting. Just a giant bucket of assets, and the script does the right thing.
