@@ -17,7 +17,8 @@ namespace UnityEditor.AddressableAssets.Build.AnalyzeRules
         string autoBundlesFolderName = "AutoBundles"; // Name of the folder that will be scanned.
         string assetFilter = "t:AnimationClip t:AudioClip t:AudioMixer t:ComputeShader t:Font t:GUISkin t:Material t:Mesh t:Model t:PhysicMaterial t:Prefab t:Scene t:Shader t:Sprite t:Texture t:VideoClip";
         string[] ignoreExtensions = {".fbx", ".psd"};
-        bool neverBundleNoReferences = true; // Never bundle assets that aren't referenced from anywhere in any Assets folder.
+        string[] alwaysIncludeExtensions = {".unity"};
+        string forceLabel = "ForceAddressable"; // Assets with this label are always included no matter what.
 
         public struct AssetAction {
             public bool create;     // True = create, false = remove addressable asset
@@ -43,6 +44,8 @@ namespace UnityEditor.AddressableAssets.Build.AnalyzeRules
             ClearAnalysis();
             ClearOurData();
 
+            var projectRoot = Application.dataPath.Substring(0, Application.dataPath.Length - "Assets/".Length);
+
             if (!BuildUtility.CheckModifiedScenesAndAskToSave())
             {
                 Debug.LogError("Cannot run Analyze with unsaved scenes");
@@ -50,7 +53,7 @@ namespace UnityEditor.AddressableAssets.Build.AnalyzeRules
                 return results;
             }
 
-            // Get all folders in Assets/AutoBundles
+            // Get all immediate folders in Assets/AutoBundles
 
             HashSet<string> folderNames = new HashSet<string>();
             var folders = AssetDatabase.GetSubFolders("Assets/" + autoBundlesFolderName);
@@ -87,55 +90,145 @@ namespace UnityEditor.AddressableAssets.Build.AnalyzeRules
                 }
             }
 
-            // Collect all assets that have zero or one references. They will not be bundled, because
-            // Addressables will automatically bring them in. This reduces the number of individual bundles.
+            // Get all assets
 
-            Dictionary<string, int> refCounts = new Dictionary<string, int>();
-            var guids = AssetDatabase.FindAssets(assetFilter, new [] {"Assets"});
-            
-            foreach (var guid in guids) {
-                string path = AssetDatabase.GUIDToAssetPath(guid);
+            var allGuids = AssetDatabase.FindAssets(assetFilter, new [] {"Assets/" + autoBundlesFolderName});
+            var neverBundle = new HashSet<string>();
 
+            // Only include assets that pass basic filtering, like file extension.
+            // Result is "assetPaths", the authoritative list of assets we're considering bundling.
+
+            var assetPaths = new HashSet<string>();
+
+            foreach (var guid in allGuids) {
+                var path = AssetDatabase.GUIDToAssetPath(guid);
+
+                if (ShouldIgnoreAsset(path)) {
+                    neverBundle.Add(path.ToLower());
+                } else {
+                    assetPaths.Add(path);
+                }
+            }
+
+            // Collect all parents of all assets in preparation for not bundling assets with one ultimate non-scene parent.
+
+            var parents = new Dictionary<string, HashSet<string>>(); // Map from asset guid to all its parents
+
+            foreach (var path in assetPaths) {
                 var dependencies = AssetDatabase.GetDependencies(path);
+
                 foreach (var asset in dependencies) {
                     if (asset == path) {
                         // Ignore self
                         continue;
                     }
-                    if (refCounts.ContainsKey(asset)) {
-                        refCounts[asset]++;
-                    } else {
-                        refCounts[asset] = 1;
+
+                    if (ShouldIgnoreAsset(asset)) {
+                        continue;
                     }
+
+                    if (!parents.ContainsKey(asset)) {
+                        parents.Add(asset, new HashSet<string>());
+                    }
+                    parents[asset].Add(path);
                 }
             }
 
-            // Select which items to never bundle. This includes items that have no references or only one references,
-            // as well as unwanted file extensions.
+            // Unbundle assets with zero parents
 
-            HashSet<string> neverBundle = new HashSet<string>();
+            foreach (var asset in assetPaths) {
+                if (!parents.ContainsKey(asset)) {
+                    neverBundle.Add(asset.ToLower());
+                }
+            }
 
-            foreach (KeyValuePair<string, int> asset in refCounts) {
-                if (asset.Value == 0 && neverBundleNoReferences || asset.Value == 1) {
-                    neverBundle.Add(asset.Key);
-                    break;
+            Debug.Log(neverBundle.Count + " asset have zero parents and won't be bundled");
+            int floor = neverBundle.Count;
+
+            // Unbundle assets with one parent
+
+            foreach (var asset in assetPaths) {
+                if (parents.ContainsKey(asset) && parents[asset].Count == 1) {
+                    neverBundle.Add(asset.ToLower());
+                }
+            }
+
+            Debug.Log((neverBundle.Count - floor) + " asset have one parent and won't be bundled");
+            floor = neverBundle.Count;
+
+            // Unbundle assets with one ultimate parent
+
+            var ultimateParents = new Dictionary<string, HashSet<string>>();
+
+            foreach (var asset in assetPaths) {
+                if (neverBundle.Contains(asset.ToLower())) {
+                    continue;
                 }
 
-                bool ignore = false;
-                foreach (var ext in ignoreExtensions) {
-                    if (asset.Key.ToLower().EndsWith(ext)) {
-                        ignore = true;
-                        break;
+                ultimateParents[asset] = new HashSet<string>();
+
+                // Iterate all the way to the top for this asset. Assemble a list of all ultimate parents of this asset.
+
+                var parentsToCheck = new List<string>();
+                parentsToCheck.AddRange(parents[asset].ToList());
+
+                while (parentsToCheck.Count != 0) {
+                    var checking = parentsToCheck[0];
+                    parentsToCheck.RemoveAt(0);
+
+                    if (!parents.ContainsKey(checking)) {
+                        // If asset we're checking doesn't itself have any parents, this is the end.
+                        ultimateParents[asset].Add(checking);
+                    } else {
+                        parentsToCheck.AddRange(parents[checking]);
                     }
-                }
-                if (ignore) {
-                    neverBundle.Add(asset.Key);
                 }
             }
             
+            // Unbundle all assets that don't have two or more required objects as ultimate parents.
+            // Objects with one included parent will still get included if needed, just not as a separate Addressable.
+            
+            foreach (KeyValuePair<string, HashSet<string>> pair in ultimateParents) {
+                int requiredParents = 0;
+                foreach (var ultiParent in pair.Value) {
+                    if (AlwaysIncludeAsset(ultiParent)) {
+                        requiredParents++;
+                    }
+                }
+
+                if (requiredParents <= 1) {
+                    neverBundle.Add(pair.Key.ToLower());
+                }
+            }
+
+            Debug.Log((neverBundle.Count - floor) + " asset have zero or one ultimate parents and won't be bundled");
+            floor = neverBundle.Count;
+
+            // Skip assets that are too small. This is a tradeoff between individual access to files,
+            // versus the game not having an open file handle for every single 2 KB thing. We're choosing
+            // to duplicate some things by baking them into multiple bundles, even though it requires
+            // more storage and bandwidth.
+
+            int tooSmallCount = 0;
+
+            foreach (var asset in assetPaths) {
+                if (neverBundle.Contains(asset.ToLower())) {
+                    continue;
+                }
+                var diskPath = projectRoot + "/" + asset;
+                var fileInfo = new System.IO.FileInfo(diskPath);
+                if (fileInfo.Length < 10000) {
+                    tooSmallCount++;
+                    neverBundle.Add(asset.ToLower());
+                }
+            }
+
+            Debug.Log(tooSmallCount + " assets are too small and won't be bundled");
+
             // Collect all assets to create as addressables
 
             string preamble = "Assets/" + autoBundlesFolderName + "/";
+            var expresslyBundled = new HashSet<string>();
 
             foreach (var folder in folderNames) {
                 var assetGuids = AssetDatabase.FindAssets(assetFilter, new [] {"Assets/" + autoBundlesFolderName + "/" + folder});
@@ -147,14 +240,17 @@ namespace UnityEditor.AddressableAssets.Build.AnalyzeRules
                     
                     // Skip assets we're never bundling
 
-                    if (neverBundle.Contains(addrPath)) {
+                    string lowerPath = addrPath.ToLower();
+                    if (neverBundle.Contains(lowerPath) && !AlwaysIncludeAsset(lowerPath)) {
                         continue;
                     }
 
                     // Remove the Assets/AutoBundles/ part of assets paths.
 
-                    if (addrPath.StartsWith(preamble)) {
-                        addrPath = addrPath.Substring(preamble.Length);
+                    var shortPath = addrPath;
+
+                    if (shortPath.StartsWith(preamble)) {
+                        shortPath = shortPath.Substring(preamble.Length);
                     }
 
                     // Create asset creation/moving action.
@@ -165,25 +261,29 @@ namespace UnityEditor.AddressableAssets.Build.AnalyzeRules
                         create = true,
                         inGroup = autoGroup,
                         assetGuid = guid,
-                        addressablePath = addrPath
+                        addressablePath = shortPath
                     });
 
                     AddressableAssetEntry entry = settings.FindAssetEntry(guid);
                     if (entry == null) {
-                        results.Add(new AnalyzeResult(){resultName = "Add:" + addrPath});
+                        results.Add(new AnalyzeResult(){resultName = "Add:" + shortPath});
                     } else {
-                        results.Add(new AnalyzeResult(){resultName = "Keep or move:" + addrPath}); 
+                        results.Add(new AnalyzeResult(){resultName = "Keep or move:" + shortPath}); 
                     }
+
+                    expresslyBundled.Add(shortPath);
                 }
+            }
 
-                // Schedule removal of assets that exist as addressables but don't exist anywhere under the AutoBundles tree
+            // Schedule removal of assets in auto folders that exist as addressables but aren't expressly bundled.
 
+            foreach (var folder in folderNames) {
                 string autoName = autoGroupPrefix + folder;
                 var group = settings.FindGroup(autoName);
 
                 if (group != null) {
                     List<AddressableAssetEntry> result = new List<AddressableAssetEntry>();
-                    group.GatherAllAssets(result, true, true, true);
+                    group.GatherAllAssets(result, true, false, true);
 
                     foreach (var entry in result) {
                         if (entry.IsSubAsset) {
@@ -193,10 +293,7 @@ namespace UnityEditor.AddressableAssets.Build.AnalyzeRules
                             Debug.Log("Entry has no guid! " + entry.address);
                         }
 
-                        string assetPath = AssetDatabase.GUIDToAssetPath(entry.guid);
-
-
-                        if (!assetPath.StartsWith("Assets/" + autoBundlesFolderName + "/")) {
+                        if (!expresslyBundled.Contains(entry.address)) {
                             assetActions.Add(new AssetAction() {
                                 create = false,
                                 inGroup = autoName,
@@ -213,6 +310,39 @@ namespace UnityEditor.AddressableAssets.Build.AnalyzeRules
             }
 
             return results;
+        }
+
+        public bool ShouldIgnoreAsset(string path)
+        {
+            foreach (var ext in alwaysIncludeExtensions) {
+                if (path.ToLower().EndsWith(ext)) {
+                    return false;
+                }
+            }
+
+            foreach (var ext in ignoreExtensions) {
+                if (path.ToLower().EndsWith(ext)) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        public bool AlwaysIncludeAsset(string path)
+        {
+            foreach (var ext in alwaysIncludeExtensions) {
+                if (path.ToLower().EndsWith(ext)) {
+                    return true;
+                }
+            }
+
+            var asset = AssetDatabase.LoadMainAssetAtPath(path);
+            var labels = AssetDatabase.GetLabels(asset);
+            if (labels.Contains(forceLabel)) {
+                return true;
+            }
+
+            return false;
         }
 
         public override void FixIssues(AddressableAssetSettings settings)
