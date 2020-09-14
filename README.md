@@ -32,7 +32,6 @@ Addressables are automatically created for everything in this folder, each singl
   * It's too small to warrant its own bundle file. Gets duplicated into multiple bundles instead, to reduce number of bundles.
 * Any assets not bundled are still included by the Addressables framework if needed, just not in a separate bundle file.
 * You can force the inclusion of an asset by adding the label "ForceAddressable", e.g. if you intend to address the asset manually, and it's currently unreferenced.
-Under the AutoBundles folder, you arrange all your assets in appropriate folders, e.g. a "Trees" folder, a "Rocks" folder, a "Scenes" folder.
 * You only push actual changes to the CDN.
 * User only downloads what's needed for the scenes/assets they're intending to run.
 
